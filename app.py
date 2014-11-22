@@ -5,7 +5,7 @@ from flask import Flask, redirect, url_for, render_template, current_app, reques
 from logentries import LogentriesHandler
 import logging
 import requests
-import jwt
+import jwt, simplejson, urllib, time
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'top_secret_sc@'
@@ -172,10 +172,14 @@ class GoogleSignIn(OAuthAuthenticator):
 def time_trip(origin, destination):
     url = app.config['GOOGLE_DISTANCE_MATRIX_URI']
     params = {
-        'origin' : origin.replace(' ', '+'),
-        'destination': destination.replace(' ', '+'),
-        'key' : app.config.get('GOOGLE_API_KEY')
+        'origins' : origin.replace(' ', '+'),
+        'destinations': destination.replace(' ', '+'),
+        'departure_time' : int(time.time()),
+        'mode' : 'driving',
+        'sensor' : 'false', 
+        'language' : 'en'
     }
+
     return requests.get(url, params=params)
 
 @app.route('/')
