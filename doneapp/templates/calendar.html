@@ -14,7 +14,7 @@
 
 
 
-        <form class="form-signin" method="POST" role="form" action="/orderuber">
+        <form class="form-signin" method="POST" role="form" action="/uber/request">
           <h2 class="form-signin-heading">Please Enter Address</h2>
           <label for="address" class="sr-only">Address</label>
           <input type="address" name = "address" id="address" class="form-control" placeholder="Address" required autofocus>
@@ -24,7 +24,7 @@
           <br />
           {% if ordered %}       
             <h1>Uber Ordered to {{ address }}</h1>     
-            <a href = "/canceluber">Cancel Uber</a>
+            <a href = "/uber/cancel">Cancel Uber</a>
           {% else %}
             <h1>Not ordered yet!</h1>
           {% endif %}

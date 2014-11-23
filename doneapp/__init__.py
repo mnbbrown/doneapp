@@ -12,6 +12,8 @@ from .oauth import OAuthAuthenticator
 from .db import db, User, Calendar, Event, CalenderChannel
 from .forms import RegistrationForm, LoginForm
 
+from .util import bookuber,canceluber
+
 __all__ = ['app','db']
 
 
@@ -100,6 +102,10 @@ def oauth_callback(provider):
         db.session.commit()            
     return redirect(url_for('preferences'))
 
+@lm.unauthorized_handler
+def unauthorized_callback():
+    return redirect('/login?next=' + request.path)
+
 
 # ------ AJAX ------
 
@@ -132,6 +138,27 @@ def add_calendar():
     return "OK"
 
 
+# ------ UBERING -------
+
+
+@login_required
+@app.route("/uber/request", methods=["POST"])
+def request_uber():
+    address = request.form["address"]
+    bookuber(address)
+    return render_template('calendar.html',ordered=1, address=address)
+
+
+@login_required
+@app.route("/uber/cancel")
+def cancel_uber():
+    from uber import UberClient
+    token = UberClient.login('uber@jaredpage.net','123uberdone')
+    client = UberClient('uber@jaredpage.net', token)
+    canceluber(client)
+    return render_template('calendar.html',ordered=0)
+
+
 # ------ APPLICATION! ------
 
 @login_required
@@ -155,7 +182,7 @@ def get_user_calendars():
         return render_template('calendars.html', calendars=c)
     return render_template('calendars.html', calendars=c)
 
-
+@login_required
 @app.route("/preferences")
 def preferences():    
     return render_template('preferences.html')

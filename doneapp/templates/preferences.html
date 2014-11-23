@@ -46,9 +46,11 @@
           {% if not g.user.google_token %}
           <a href="/auth/authorize/google">
             <div class="google-button"></div>
+
           </a>
           {% else %}
-          <span>CONNECTED with {{g.user.google_token}}</span>
+          <span>CONNECTED with token {{g.user.google_token}}</span>
+            <strong><a href="/auth/authorize/google">REFRESH</a></strong>
           {% endif %}
 
           <h3 class="sub-header">Uber Account</h3>
@@ -57,7 +59,8 @@
             <div class="uber-button"></div>
           </a>
           {% else %}
-          <span>CONNECTED with {{g.user.uber_token}}</span>
+          <span>CONNECTED with token {{g.user.uber_token}}</span>
+          <strong><a href="/auth/authorize/uber">REFRESH</a></strong>
           {% endif %}
 
           <h3 class="sub-header">Notification preferences</h3>
@@ -72,4 +75,4 @@
 
 
 
-{% endblock %}
+{% endblock %}l
