@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<style>
+
+#google:hover {
+  background-image: url('images/Red-signin-Google-hover-32dp.png');  
+}
+
+  
+</style>
+  
+  <form action="" method=post class="form-horizontal">
+    <h2>Connect your Accounts</h2>
+<table width="300px">
+<tr>
+<td>
+    <div class="control-group">
+        <div class="controls google">
+          <a href = "/auth/authorize/google"><img  src="images/Red-signin-Google-base-32dp.png"  id ="google" onmouseover="this.src='images/Red-signin-Google-hover-32dp.png';" onmouseout="this.src='images/Red-signin-Google-press-32dp.png';" ></a>
+        </div>
+    </div>
+    </td>
+</tr>
+<tr>
+<td>
+    <div class="control-group">
+        <div class="controls uber">
+          <a href = "/auth/authorize/uber"><img width="100%" src="images/UBER_API_Button_2x_Grey_hard edge.png" id = "uber" ></a>
+        </div>
+    </div>
+    </td>
+    </tr>
+    </table>
+  </form>
+
+
+ 
+{% endblock %}
