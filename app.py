@@ -8,11 +8,24 @@ import requests
 import jwt
 import urllib
 import uuid
+import datetime
 import json
 
+from flask import flash, session
+from flask.ext.login import login_user, logout_user, current_user, login_required
+
+
+from flask.ext.wtf import Form, validators
+from wtforms.fields import TextField, BooleanField
+from wtforms.validators import Required
+from flask import flash, redirect, url_for, session, render_template
+
+from wtforms import Form, BooleanField, TextField, PasswordField, validators
+from flask import Flask,session, request, flash, url_for, redirect, render_template, abort ,g
+
+from flask.ext.login import login_user , logout_user , current_user , login_required
 
 app = Flask(__name__)
-app.config['BASE_URL'] = 'http://app.doneapp.co/'
 app.config['SECRET_KEY'] = 'top_secret_sc@'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -32,10 +45,50 @@ app.config['LOGENTRIES_TOKEN'] = '0d48654e-4ee6-4c64-b5b8-c898d64cf643'
 
 db = SQLAlchemy(app)
 lm = LoginManager(app)
+lm.init_app(app)
+lm.login_view = 'login'
 
 log = logging.getLogger('logentries')
 log.setLevel(logging.INFO)
 log.addHandler(LogentriesHandler(app.config.get('LOGENTRIES_TOKEN')))
+
+
+class RegistrationForm(Form):
+    username = TextField('Username', [validators.Length(min=4, max=25)])
+    email = TextField('Email Address', [validators.Length(min=6, max=35)])
+    password = PasswordField('New Password', [
+        validators.Required(),
+        validators.EqualTo('confirm', message='Passwords must match')
+    ])
+    confirm = PasswordField('Repeat Password')
+    accept_tos = BooleanField('I accept the TOS', [validators.Required()])
+
+
+class LoginForm(Form):
+    username = TextField('Username', [validators.Required()])
+    password = PasswordField('Password', [validators.Required()])
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+        self.user = None
+
+    def validate(self):
+        rv = Form.validate(self)
+        if not rv:
+            return False
+
+        user = User.query.filter_by(
+            username=self.username.data).first()
+        if user is None:
+            self.username.errors.append('Unknown username')
+            return False
+
+        if not user.check_password(self.password.data):
+            self.password.errors.append('Invalid password')
+            return False
+
+        self.user = user
+        return True
 
 class User(db.Model):
 
@@ -77,7 +130,7 @@ class User(db.Model):
         self.name = name
         self.password = password
         self.email = email
-        self.registered_on = datetime.utcnow()
+        self.registered_on = datetime.datetime.utcnow()
 
 
 class Calendar(db.Model):
@@ -214,6 +267,11 @@ def add_calendar():
 def user_loader(id):
     return User.query.get(int(id))
 
+
+@app.before_request
+def before_request():
+    g.user = current_user
+
 class OAuthAuthenticator(object):
 
     providers = None
@@ -317,8 +375,7 @@ class GoogleSignIn(OAuthAuthenticator):
             data=parameters,
         )
 
-        access_token = response.json()['access_token']
-        return str(response.json())
+        return response.json()
 
 
 def time_trip(origin, destination):
@@ -347,7 +404,89 @@ def oauth_authorize(provider):
 @app.route('/auth/callback/<provider>')
 def oauth_callback(provider):
     oauth = OAuthAuthenticator.get_provider(provider)
-    return oauth.callback()
+    response = oauth.callback()
+    if "access_token" in response:
+        print g.user.id
+        dbtoken = User.query.filter_by(id=g.user.id).first()
+        if provider == 'google':
+            dbtoken.google_token = response.get('access_token')
+            #Connected with google
+            
+        elif provider == 'uber':
+            dbtoken.uber_token = response.get('access_token')
+        db.session.commit()            
+    return redirect(url_for('preferences'))
+
+
+
+@app.route('/auth/register' , methods=['GET','POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html')
+    user = User(request.form['username'] , request.form['password'],request.form['email'])
+    db.session.add(user)
+    db.session.commit()
+    flash('User successfully registered')
+    return redirect(url_for('login'))
+ 
+@app.route('/auth/login',methods=['GET','POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    username = request.form['username']
+    password = request.form['password']
+    registered_user = User.query.filter_by(name=username,password=password).first()
+    if registered_user is None:
+        flash('Username or Password is invalid' , 'error')
+        return redirect(url_for('login'))
+    login_user(registered_user)
+    flash('Logged in successfully')
+    return redirect(request.args.get('next') or url_for('preferences'))
+
+
+# @app.route("/auth/login", methods=["GET", "POST"])
+# def login():   
+
+#     form = LoginForm()
+#     if form.validate_on_submit():
+#         flash(u'Successfully logged in as %s' % form.user.username)
+#         session['user_id'] = form.user.id
+#         return redirect(url_for('index'))
+#     return render_template('login.html', form=form)
+    # form = LoginForm()
+    # if form.validate_on_submit():
+    #     # login and validate the user...
+    #     login_user(user)
+    #     flash("Logged in successfully.")
+    #     return redirect(request.args.get("next") or url_for("index"))
+    # return render_template("login.html", form=form)
+
+    # if g.user is not None and g.user.is_authenticated():s
+    #     return redirect(url_for('index'))
+    # form = LoginForm()
+    # return ""
+
+# @app.route("/auth/register")
+
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     form = RegistrationForm(request.form)
+#     if request.method == 'POST' and form.validate():
+#         user = User(form.username.data, form.email.data,
+#                     form.password.data)
+#         db_session.add(user)
+#         flash('Thanks for registering')
+#         return redirect(url_for('login'))
+#     return render_template('register.html', form=form)
+
+# def register():
+#     if request.method == 'GET':
+#         return render_template('register.html')
+#     user = User(request.form['name'] , request.form['password'], request.form['email'])
+#     db.session.add(user)
+#     db.session.commit()
+#     flash('User successfully registered')
+#     return redirect(url_for('login'))
 
 @app.route("/socialconnect")
 def socialconnect():    
@@ -359,9 +498,6 @@ def socialconnect():
         # return redirect(request.args.get("next") or url_for("index"))
     # return render_template("login.html", form=form)
 
-@app.route("/signin")
-def signin():    
-    return render_template('signin.html')
 
 @app.route("/calendar")
 def calendar():    
@@ -371,22 +507,16 @@ def calendar():
 def preferences():    
     return render_template('preferences.html')
 
-
-
 @app.route("/auth/register")
 def register():
-    if request.method == 'POST' and form.validate():
-        user = User(request.form['name'] , request.form['password'], request.form['email']) 
-        db.session.add(user)
-        db.session.commit()
-        flash('User successfully registered')
-        return redirect(url_for('confirm_register'))
-    return render_template('register.html', form=form)
+    if request.method == 'GET':
+        return render_template('register.html')
+    user = User(request.form['name'] , request.form['password'], request.form['email'])
+    db.session.add(user)
+    db.session.commit()
+    flash('User successfully registered')
+    return redirect(url_for('login'))
 
-
-@app.route("/auth/register/confirm")
-def confirm_register():
-    render_template('confirm-register.html')
 
 @app.route("/time")
 def time():

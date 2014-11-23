@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 {% block title %}Calendar{% endblock %}
 {% block body %}
+<style>
 
+<<<<<<< HEAD
 <style>
   .uber-button {
     background-image: url({{ url_for('static', filename='img/sprites.jpg') }});
@@ -29,6 +31,14 @@
   }
 </style>
 
+=======
+#google:hover {
+  background-image: url('images/Red-signin-Google-hover-32dp.png');  
+}
+
+  
+</style>
+>>>>>>> 9d1c6005642dfa7dff3a41bc85e5d2b19c28e5e7
     <div class="container-fluid">
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
@@ -42,7 +52,10 @@
           <h3 class="sub-header">Me</h3>
           Logged in as Reinard van der Leij
 
+
+
           <h3 class="sub-header">Google Calendar Account</h3>
+<<<<<<< HEAD
           <a href="/auth/authorize/google">
             <div class="google-button"></div>
           </a>
@@ -51,6 +64,22 @@
           <a href="/auth/authorize/uber">
             <div class="uber-button"></div>
           </a>
+=======
+          Google Calendar information here.
+          <div class="control-group">
+              <div class="controls google">
+                <a href = "/auth/authorize/google"><img  src="{{ url_for('static', filename='img/Red-signin-Google-base-32dp.png') }}"  id ="google" onmouseover="this.src='{{ url_for('static', filename='img/Red-signin-Google-hover-32dp.png') }}';" onmouseout="this.src='{{ url_for('static', filename='img/Red-signin-Google-press-32dp.png') }}';" ></a>
+              </div>
+          </div>
+
+          <h3 class="sub-header">Uber Account</h3>
+          Uber account information here.
+          <div class="control-group">
+              <div class="controls uber">
+                <a href = "/auth/authorize/uber"><img width="100%" src="{{ url_for('static', filename='img/UBER_API_Button_2x_Grey_hard edge.png') }}" id = "uber" ></a>
+              </div>
+          </div>
+>>>>>>> 9d1c6005642dfa7dff3a41bc85e5d2b19c28e5e7
 
           <h3 class="sub-header">Notification preferences</h3>
             <input type="radio" name="notify" value="off">   Off: Order without asking<br>
@@ -58,5 +87,10 @@
         </div>
       </div>
     </div>
+
+
+
+
+
 
 {% endblock %}
