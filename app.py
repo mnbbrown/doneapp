@@ -7,6 +7,7 @@ import logging
 import requests
 import jwt
 import urllib
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'top_secret_sc@'
@@ -23,6 +24,7 @@ app.config['OAUTH_CREDENTIALS'] = {
 }
 app.config['GOOGLE_API_KEY'] = 'AIzaSyDZ0Phgpt9_CXw29f3Ui2NNkYTj14eckUY'
 app.config['GOOGLE_DISTANCE_MATRIX_URI'] = 'https://maps.googleapis.com/maps/api/distancematrix/json'
+app.config['GOOGLE_CALENDAR_LIST'] = 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
 app.config['LOGENTRIES_TOKEN'] = '0d48654e-4ee6-4c64-b5b8-c898d64cf643'
 
 db = SQLAlchemy(app)
@@ -34,7 +36,7 @@ log.addHandler(LogentriesHandler(app.config.get('LOGENTRIES_TOKEN')))
 
 class User(db.Model):
 
-    __tablename__ = 'user'
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
@@ -47,6 +49,8 @@ class User(db.Model):
     google_token_expiry = db.Column(db.String)
     google_token_refresh = db.Column(db.String)
     dt_created = db.Column(db.DateTime)
+
+    calendars = db.relationship('Calendar', backref='user', lazy='dynamic')
 
     def is_authenticated(self):
         return True
@@ -73,10 +77,52 @@ class User(db.Model):
         self.registered_on = datetime.utcnow()
 
 
+class Calendar(db.Model):
+
+    __tablename__ = 'user_calendars'
+
+    id = db.Column(db.String, primary_key=True)
+    name = db.Column(db.String)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    events = db.relationship('Event', backref='calendar', lazy='dynamic')
+
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+class Event(db.Model):
+
+    __tablename__ = 'calendar_events'
+
+    id = db.Column(db.String, primary_key=True)
+    calendar_id = db.Column(db.String, db.ForeignKey('user_calendars.id'))
+    summary = db.Column(db.String)
+    location = db.Column(db.String)
+    start_time = db.Column(db.DateTime(timezone=True))
+    end_time = db.Column(db.DateTime(timezone=True))
+
+
+@app.route("/me/calendars")
+def get_user_calendars(token="ya29.xgBWfp_SErFKtnwjB2BdFxJWhlm1jkDUseZF2gPfInhKeXUdSoMFiP4d0wA2kGSoIf2BKAyfnzqIEg"):
+    url = app.config.get('GOOGLE_CALENDAR_LIST')
+    headers = {"Authorization": "Bearer {0}".format(token)}
+    calendars = requests.get(url, headers=headers)
+    c = []
+    for calendar in calendars.json().get('items'):
+        c.append((calendar.get('id'), calendar.get('summary')))
+
+    i, name = c[0]
+    events = requests.get('https://www.googleapis.com/calendar/v3/calendars/{0}/events'.format(i), headers=headers)
+    e = []
+    for event in events.json().get('items'):
+        e.append((event['id'], event['summary'],event['location']))
+    print e
+    return render_template('calendars.html', calendars=c)
+
+
 @lm.user_loader
 def user_loader(id):
     return User.query.get(int(id))
-
 
 class OAuthAuthenticator(object):
 
@@ -180,6 +226,8 @@ class GoogleSignIn(OAuthAuthenticator):
         response = requests.post(self.service.access_token_url,
             data=parameters,
         )
+
+        access_token = response.json()['access_token']
         return str(response.json())
 
 
