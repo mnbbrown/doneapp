@@ -6,6 +6,7 @@ from logentries import LogentriesHandler
 import logging
 import requests
 import jwt
+import urllib
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'top_secret_sc@'
@@ -32,10 +33,19 @@ log.setLevel(logging.INFO)
 log.addHandler(LogentriesHandler(app.config.get('LOGENTRIES_TOKEN')))
 
 class User(db.Model):
+
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
     email = db.Column(db.String(120), index=True, unique=True)
     password = db.Column(db.String(120))
+    uber_token = db.Column(db.String)
+    uber_token_expiry = db.Column(db.String)
+    uber_token_refresh = db.Column(db.String)
+    google_token = db.Column(db.String)
+    google_token_expiry = db.Column(db.String)
+    google_token_refresh = db.Column(db.String)
     dt_created = db.Column(db.DateTime)
 
     def is_authenticated(self):
@@ -62,9 +72,11 @@ class User(db.Model):
         self.email = email
         self.registered_on = datetime.utcnow()
 
+
 @lm.user_loader
 def user_loader(id):
     return User.query.get(int(id))
+
 
 class OAuthAuthenticator(object):
 
@@ -122,7 +134,7 @@ class UberSignIn(OAuthAuthenticator):
             return None
         parameters = {
             'redirect_uri': self.get_callback_url(),
-            'code': request.args.get('code'),
+            'code': urllib.quote_plus(request.args.get('code')),
             'grant_type': 'authorization_code',
             'client_id' : self.consumer_id,
             'client_secret' : self.consumer_secret
@@ -147,11 +159,13 @@ class GoogleSignIn(OAuthAuthenticator):
             )
 
     def authorize(self):
-        return redirect(self.service.get_authorize_url(
-            scope='https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar',
-            response_type='code',
-            redirect_uri=self.get_callback_url())
-        )
+        params = {
+            'scope': 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar',
+            'response_type': 'code',
+            'redirect_uri': self.get_callback_url(),
+            'access_type': 'offline'
+        }
+        return redirect(self.service.get_authorize_url(**params))
 
     def callback(self):
         if 'code' not in request.args:
@@ -191,8 +205,7 @@ def oauth_authorize(provider):
 @app.route('/auth/callback/<provider>')
 def oauth_callback(provider):
     oauth = OAuthAuthenticator.get_provider(provider)
-    token = oauth.callback()['access_token']
-    return oauth.callback()    
+    return oauth.callback()
 
 
 @app.route("/auth/login")
