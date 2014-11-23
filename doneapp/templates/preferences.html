@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block title %}Calendar{% endblock %}
+{% block body %}
+<style>
+  .uber-button {
+    background-image: url({{ url_for('static', filename='img/sprites.jpg') }});
+    background-size: cover;
+    display: block;
+    height: 40px;
+    width: 200px;
+    border-radius: 5px;
+  }
+  .uber-button:hover {
+    background-position: 0 -40px;
+  }
+
+  .google-button {
+    background-image: url({{ url_for('static', filename='img/sprites.jpg') }});
+    background-position: 0 -80px;
+    background-size: cover;
+    display: block;
+    height: 40px;
+    width: 200px;
+    border-radius: 5px;
+  }
+  .google-button:hover {
+    background-position: 0 -120px;
+  }
+</style>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li><a href="/calendar">Calendar</a></li>
+            <li><a href="/preferences">Preferences</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">Preferences</h1>
+
+          <h3 class="sub-header">Me</h3>
+          Logged in as {{g.user.name}} <br>
+          Email: {{g.user.email}}
+
+          <h3 class="sub-header">Google Calendar Account</h3>
+          {% if not g.user.google_token %}
+          <a href="/auth/authorize/google">
+            <div class="google-button"></div>
+          </a>
+          {% else %}
+          <span>CONNECTED with {{g.user.google_token}}</span>
+          {% endif %}
+
+          <h3 class="sub-header">Uber Account</h3>
+          {% if not g.user.uber_token %}
+          <a href="/auth/authorize/uber">
+            <div class="uber-button"></div>
+          </a>
+          {% else %}
+          <span>CONNECTED with {{g.user.uber_token}}</span>
+          {% endif %}
+
+          <h3 class="sub-header">Notification preferences</h3>
+            <input type="radio" name="notify" value="off">   Off: Order without asking<br>
+            <input type="radio" name="notify" value="optout">   Opt-Out: Order only after asking<br>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+
+{% endblock %}

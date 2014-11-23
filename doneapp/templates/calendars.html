@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block title %}Calendar{% endblock %}
+{% block body %}
+
+<div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li class="active"><a href="/calendar">Calendar <span class="sr-only">(current)</span></a></li>
+          </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">Calendar</h1>
+ <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Calendar</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+					{% for id, name in calendars %}
+					<tr>
+		<td>{{name}}</td>		
+		<td><button onclick="javascript:connect({{id}});"></button></td>
+	{% endfor %}
+              </tbody>
+              <script>
+              		var connect = function(id) {
+              			console.log(id);
+              		}
+              </script>
+{% endblock %}
