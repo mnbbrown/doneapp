@@ -1,0 +1,8 @@
+requests>=1.0.0
+pycrypto>=2.5
+python-dateutil>=1.5
+
+[tests]
+flexmock>=0.9.7
+nose
+coverage

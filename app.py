@@ -25,6 +25,20 @@ from flask import Flask,session, request, flash, url_for, redirect, render_templ
 
 from flask.ext.login import login_user , logout_user , current_user , login_required
 
+#UBER
+from cmd import Cmd
+import json
+from os import path
+import shlex
+import signal
+import time
+from uber import UberClient, geolocate, ClientStatus, UberException
+from uber.model_base import Model, StringField
+import sys
+
+
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'top_secret_sc@'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
@@ -325,7 +339,6 @@ def oauth_callback(provider):
         elif provider == 'uber':
             dbtoken.uber_token = response.get('access_token') 
         db.session.commit()            
-        
         return render_template('preferences.html',google=dbtoken.google_token,uber=dbtoken.uber_token)
     else:
         return render_template('preferences.html')
@@ -360,6 +373,85 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index')) 
+
+
+def nearbyUber(client,address_str):
+    
+    """
+    shows you what taxis are close to you.
+    Usage: ping <address>
+    """
+    if not address_str:
+        print
+ 
+    results = geolocate(address_str)
+    if not results:
+        print 'address not found :('
+        return
+
+    geodecoded_address = results[0]
+
+    print 'pinging: ' + geodecoded_address['formatted_address']
+    app_state = client.ping(geodecoded_address)
+    city = app_state.city
+    vehicle_views = city.vehicle_views
+    for key in city.vehicle_views_order:
+        nearby_info = app_state.nearby_vehicles.get(key)
+        view = vehicle_views[key]
+        count = len(nearby_info.vehicle_paths)
+
+        if count:
+            additional_info = ''
+            if view.surge:
+                additional_info = 'Warning - x{multiplier} surge pricing is active!'.format(multiplier=view.surge.multiplier)
+
+            print '{name} has {count} cars near by (eta {eta}). {additional_info}'.format(
+                name=view.description,
+                count=len(nearby_info.vehicle_paths),
+                eta=nearby_info.eta_string,
+                additional_info=additional_info
+                )
+        else:
+            print '{name} has no vehicles nearby :('.format(name=view.description)
+    return 'What'
+
+def canceluber(client):    
+    print 'cancelling ride...'
+    client.cancel_pickup()
+    print 'ride cancelled.'
+
+@app.route('/orderuber')
+def orderuber():
+    #Login to obtain token
+    #token = UberClient.login('uber@jaredpage.net','123uberdone')
+    token = 'cLqir9JuchqHqOtxncYSEmMC6BiQfN'
+    #Set up client
+    client = UberClient('uber@jaredpage.net', token)
+    #show nearby ubers
+    address = 'Citizen Space, 2nd St #100, San Francisco, CA'
+    ubers = nearbyUber(client,address)
+    #geolocate
+    results = geolocate(address)
+    if not results:
+        print 'address not found :('
+        return
+    geo_address = results[0]
+    print 'booking UberX for {}...'.format(geo_address['formatted_address'])
+    #client.request_pickup(location)
+    # state = client.ping(None)
+    # status = state.client.status
+    # trip = state.trip
+    # vehicle = trip.vehicle
+    # sys.stdout.write("\r{driver} will pick you up in {eta} with a {color} {make} {model}.".format(
+    #     driver=trip.driver.name,
+    #     eta=trip.eta_string_short,
+    #     color=vehicle.exterior_color,
+    #     make=vehicle.vehicle_type.make,
+    #     model=vehicle.vehicle_type.model,
+    # ))
+
+    #Return Calendar Page
+    return render_template('calendar.html',ordered=1)
 
 # @app.route("/auth/login", methods=["GET", "POST"])
 # def login():   

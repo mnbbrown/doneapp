@@ -1,0 +1,15 @@
+Metadata-Version: 1.1
+Name: uber.py
+Version: 1.0.3
+Summary: Python client for Uber
+Home-page: http://github.com/tals/uber.py
+Author: Tal Shiri
+Author-email: eiopaa@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.7
