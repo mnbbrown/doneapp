@@ -206,9 +206,28 @@ def login():
     form = LoginForm()
     return ""
 
+
+@app.route("/socialconnect")
+def socialconnect():    
+    g = {
+        "user":{"jared"}
+    }    
+    return render_template('socialconnect.html')
+
         # return redirect(request.args.get("next") or url_for("index"))
     # return render_template("login.html", form=form)
 
+@app.route("/signin")
+def signin():    
+    return render_template('signin.html')
+
+@app.route("/calendar")
+def calendar():    
+    return render_template('calendar.html')
+
+@app.route("/preferences")
+def preferences():    
+    return render_template('preferences.html')
 
 @app.route("/auth/register")
 def register():
