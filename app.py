@@ -375,6 +375,7 @@ def logout():
     return redirect(url_for('index')) 
 
 
+
 def nearbyUber(client,address_str):
     
     """
@@ -420,16 +421,15 @@ def canceluber(client):
     client.cancel_pickup()
     print 'ride cancelled.'
 
-@app.route('/orderuber')
-def orderuber():
-    #Login to obtain token
-    #token = UberClient.login('uber@jaredpage.net','123uberdone')
-    token = 'cLqir9JuchqHqOtxncYSEmMC6BiQfN'
+def bookuber(address):
+     #Login to obtain token
+    token = UberClient.login('uber@jaredpage.net','123uberdone')
+    # token = 'cLqir9JuchqHqOtxncYSEmMC6BiQfN'
     #Set up client
     client = UberClient('uber@jaredpage.net', token)
     #show nearby ubers
-    address = 'Citizen Space, 2nd St #100, San Francisco, CA'
     ubers = nearbyUber(client,address)
+    address = 'Citizen Space, 425 2nd St , San Francisco, CA'
     #geolocate
     results = geolocate(address)
     if not results:
@@ -437,7 +437,12 @@ def orderuber():
         return
     geo_address = results[0]
     print 'booking UberX for {}...'.format(geo_address['formatted_address'])
-    #client.request_pickup(location)
+
+@app.route('/orderuber', methods=["POST"])
+def orderuber():
+    address = request.form["address"]
+    bookuber(address)
+    ######client.request_pickup(location)
     # state = client.ping(None)
     # status = state.client.status
     # trip = state.trip
@@ -451,7 +456,19 @@ def orderuber():
     # ))
 
     #Return Calendar Page
-    return render_template('calendar.html',ordered=1)
+    # return redirect(url_for('calendar',ordered=1))
+    return render_template('calendar.html',ordered=1,address=address)
+
+@app.route('/canceluber')
+def canceluber():
+    token = UberClient.login('uber@jaredpage.net','123uberdone')
+    # token = 'cLqir9JuchqHqOtxncYSEmMC6BiQfN'
+    #Set up client
+    client = UberClient('uber@jaredpage.net', token)
+    #Cancel Pickup
+    client.cancel_pickup()
+    #Return Calendar Page
+    return render_template('calendar.html',ordered=0)
 
 # @app.route("/auth/login", methods=["GET", "POST"])
 # def login():   

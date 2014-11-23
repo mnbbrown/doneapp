@@ -12,7 +12,22 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
           <h1 class="page-header">Calendar</h1>
 
-          <a href = "/orderuber">Order Uber</a>
+
+
+        <form class="form-signin" method="POST" role="form" action="/orderuber">
+          <h2 class="form-signin-heading">Please Enter Address</h2>
+          <label for="address" class="sr-only">Address</label>
+          <input type="address" name = "address" id="address" class="form-control" placeholder="Address" required autofocus>
+          <button class="btn btn-lg btn-primary btn-block" type="submit">Order Uber</button>
+        </form>
+
+          <br />
+          {% if ordered %}       
+            <h1>Uber Ordered to {{ address }}</h1>     
+            <a href = "/canceluber">Cancel Uber</a>
+          {% else %}
+            <h1>Not ordered yet!</h1>
+          {% endif %}
 
           <div class="table-responsive">
             <table class="table table-striped">
