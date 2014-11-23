@@ -1,11 +1,36 @@
 {% extends "layout.html" %}
+{% block title %}Register{% endblock %}
 {% block body %}
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/signin.css') }}">
+    <div class="container">
+
+      <form class="form-signin" role="form">
+        <h2 class="form-signin-heading">Join done.</h2>
+        <label for="inputEmail" class="sr-only">Name</label>
+        <input type="text" id="inputName" class="form-control" placeholder="Your Name" required autofocus>
+        <label for="inputPassword" class="sr-only">Email</label>
+        <input type="text" id="inputEmail" class="form-control" placeholder="Your Email" required>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" value="remember-me"> Remember me
+          </label>
+        </div>
+        <!--<button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>-->
+        <a href="/calendar" class="btn btn-lg btn-default">Register</a>
+      </form>
+
+    </div> <!-- /container -->
+
+<!-- 
   <form action="" method=post class="form-horizontal">
     <h2>Join the Done community.</h2>
     <div class="control-group">
         <div class="controls">
-          <input type="text" id="username" name="username" class="input-xlarge"
-            placeholder="Your Name" value="{{ request.form.username }}"
+          <input type="text" id="name" name="name" class="input-xlarge"
+            placeholder="Your Name" value="{{ request.form.name }}"
             required>
         </div>
     </div>
@@ -21,7 +46,7 @@
     <div class="control-group">
         <div class="controls">
           <input type="email" id="email" name="email" class="input-xlarge"
-            placeholder="Your Email" value="{{ request.form.username }}"
+            placeholder="Your Email" value="{{ request.form.email }}"
             required>
         </div>
     </div>
@@ -31,5 +56,5 @@
           <button type="submit" class="btn btn-success">Signup</button>
         </div>
     </div>
-  </form>
+  </form> -->
 {% endblock %}
