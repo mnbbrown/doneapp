@@ -319,16 +319,16 @@ def oauth_callback(provider):
     oauth = OAuthAuthenticator.get_provider(provider)
     response = oauth.callback()
     if "access_token" in response:
-        print g.user.id
         dbtoken = User.query.filter_by(id=g.user.id).first()
         if provider == 'google':
             dbtoken.google_token = response.get('access_token')
-            #Connected with google
-            
         elif provider == 'uber':
-            dbtoken.uber_token = response.get('access_token')
+            dbtoken.uber_token = response.get('access_token') 
         db.session.commit()            
-    return redirect(url_for('preferences'))
+        
+        return render_template('preferences.html',google=dbtoken.google_token,uber=dbtoken.uber_token)
+    else:
+        return render_template('preferences.html')
 
 
 
