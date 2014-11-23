@@ -134,7 +134,7 @@ class UberSignIn(OAuthAuthenticator):
             return None
         parameters = {
             'redirect_uri': self.get_callback_url(),
-            'code': urllib.quote_plus(request.args.get('code')),
+            'code': request.args.get('code'),
             'grant_type': 'authorization_code',
             'client_id' : self.consumer_id,
             'client_secret' : self.consumer_secret
@@ -186,10 +186,14 @@ class GoogleSignIn(OAuthAuthenticator):
 def time_trip(origin, destination):
     url = app.config['GOOGLE_DISTANCE_MATRIX_URI']
     params = {
-        'origin' : origin.replace(' ', '+'),
-        'destination': destination.replace(' ', '+'),
-        'key' : app.config.get('GOOGLE_API_KEY')
+        'origins' : origin.replace(' ', '+'),
+        'destinations': destination.replace(' ', '+'),
+        'departure_time' : int(time.time()),
+        'mode' : 'driving',
+        'sensor' : 'false', 
+        'language' : 'en'
     }
+
     return requests.get(url, params=params)
 
 @app.route('/')
