@@ -180,7 +180,7 @@ class GoogleSignIn(OAuthAuthenticator):
         response = requests.post(self.service.access_token_url,
             data=parameters,
         )
-        return response.json()
+        return str(response.json())
 
 
 def time_trip(origin, destination):
