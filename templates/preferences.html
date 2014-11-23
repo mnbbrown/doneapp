@@ -2,6 +2,33 @@
 {% block title %}Calendar{% endblock %}
 {% block body %}
 
+<style>
+  .uber-button {
+    background-image: url({{ url_for('static', filename='img/sprites.jpg') }});
+    background-size: cover;
+    display: block;
+    height: 40px;
+    width: 200px;
+    border-radius: 5px;
+  }
+  .uber-button:hover {
+    background-position: 0 -40px;
+  }
+
+  .google-button {
+    background-image: url({{ url_for('static', filename='img/sprites.jpg') }});
+    background-position: 0 -80px;
+    background-size: cover;
+    display: block;
+    height: 40px;
+    width: 200px;
+    border-radius: 5px;
+  }
+  .google-button:hover {
+    background-position: 0 -120px;
+  }
+</style>
+
     <div class="container-fluid">
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
@@ -16,13 +43,18 @@
           Logged in as Reinard van der Leij
 
           <h3 class="sub-header">Google Calendar Account</h3>
-          Google Calendar information here.
+          <a href="/auth/authorize/google">
+            <div class="google-button"></div>
+          </a>
 
           <h3 class="sub-header">Uber Account</h3>
-          Uber account information here.
+          <a href="/auth/authorize/uber">
+            <div class="uber-button"></div>
+          </a>
 
           <h3 class="sub-header">Notification preferences</h3>
-
+            <input type="radio" name="notify" value="off">   Off: Order without asking<br>
+            <input type="radio" name="notify" value="optout">   Opt-Out: Order only after asking<br>
         </div>
       </div>
     </div>

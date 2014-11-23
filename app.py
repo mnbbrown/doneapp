@@ -1,15 +1,18 @@
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, UserMixin
 from rauth import OAuth2Service
-from flask import Flask, redirect, url_for, render_template, current_app, request, g
+from flask import Flask, redirect, url_for, render_template, current_app, request, g, abort
 from logentries import LogentriesHandler
 import logging
 import requests
 import jwt
 import urllib
 import uuid
+import json
+
 
 app = Flask(__name__)
+app.config['BASE_URL'] = 'http://app.doneapp.co/'
 app.config['SECRET_KEY'] = 'top_secret_sc@'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -101,23 +104,110 @@ class Event(db.Model):
     start_time = db.Column(db.DateTime(timezone=True))
     end_time = db.Column(db.DateTime(timezone=True))
 
+    def __init__(self, id, calendar_id, summary, location, start_time, end_time):
+        self.id = id
+        self.calendar_id = calendar_id
+        self.summary = summary
+        self.location = location
+        self.start_time = start_time
+        self.end_time = end_time
 
-@app.route("/me/calendars")
-def get_user_calendars(token="ya29.xgBWfp_SErFKtnwjB2BdFxJWhlm1jkDUseZF2gPfInhKeXUdSoMFiP4d0wA2kGSoIf2BKAyfnzqIEg"):
-    url = app.config.get('GOOGLE_CALENDAR_LIST')
+
+class CalenderChannel(db.Model):
+
+    __tablename__ = 'calendar_channels'
+
+    id = db.Column(db.String, primary_key=True)
+    calendar_id = db.Column(db.String, db.ForeignKey('user_calendars.id'), unique=True)
+
+    def __init__(self, calendar_id):
+        self.calendar_id = calendar_id
+        self.id = str(uuid.uuid4())
+
+    def json(self):
+        return json.dumps({
+            'id': self.id,
+            'type': 'web_hook',
+            'address': url_for('handle_channel', _external=True)
+            })
+
+
+
+def create_calendar_channel(token, calendar_id):
+    ch = CalenderChannel(calendar_id)
+    url = 'https://www.googleapis.com/calendar/v3/calendars/{0}/events/watch'.format(calendar_id)
     headers = {"Authorization": "Bearer {0}".format(token)}
-    calendars = requests.get(url, headers=headers)
-    c = []
-    for calendar in calendars.json().get('items'):
-        c.append((calendar.get('id'), calendar.get('summary')))
+    data = ch.json()
+    req = requests.post(url, headers=headers, data=data)
+    if req.status_code != 200:
+        return None
+    db.session.save(ch)
+    db.session.commit()
+    return ch
 
-    i, name = c[0]
-    events = requests.get('https://www.googleapis.com/calendar/v3/calendars/{0}/events'.format(i), headers=headers)
-    e = []
-    for event in events.json().get('items'):
-        e.append((event['id'], event['summary'],event['location']))
-    print e
-    return render_template('calendars.html', calendars=c)
+
+@app.route("/hooks/channel")
+def handle_channel():
+    print request
+    return "Thanks"
+
+import datetime
+
+def iso_format(dt):
+    try:
+        utc = dt + dt.utcoffset()
+    except TypeError as e:
+        utc = dt
+    isostring = datetime.datetime.strftime(utc, '%Y-%m-%dT%H:%M:%S.{0}Z')
+    return isostring.format(int(round(utc.microsecond/1000.0)))
+
+def parse_iso(string):
+    return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%SZ')
+
+
+@app.route("/me/calendars", methods=["POST"])
+def add_calendar():
+    calendar_id = request.form.get('calendar_id')
+    calendar_name = request.form.get('calendar_name')
+
+    print calendar_name, calendar_id
+    calendar = Calendar(calendar_id, calendar_name)
+    db.session.add(calendar)
+
+    token="ya29.xwCTgwwFjvSH4lO11fY3Aqwge8x7e8toIzX5p9mYFJIcFTbYa75_GM9GjWEEkVC9h9jVp7rdnR3BSg"
+    headers = {"Authorization": "Bearer {0}".format(token)}
+    params = {
+        'timeMin' : iso_format(datetime.datetime.now() - datetime.timedelta(days=2))
+    }
+    url = "https://www.googleapis.com/calendar/v3/calendars/{0}/events".formpat(calendar_id)
+    events = requests.get(url, headers=headers, params=params)
+
+
+    if "items" not in events.json():
+        return json.dumps(events.json())
+        abort(500)
+
+    for event in events.json()["items"]:
+        e = Event(event.get('id'), calendar_id, event.get('summary'), event.get('location'), parse_iso(event.get('start').get('dateTime')), parse_iso(event.get('end').get('dateTime')))
+        db.session.add(e)
+    
+    db.session.commit()
+    return "OK"
+
+
+# @app.route("/me/calendars")
+# def get_user_calendars(token="ya29.xwBSmkuEITLDuZISlv8eRqmk70HgF-Yfg4DlnsO4qBry2CYebTtDuFuu_tF08Y8vxM6AXJhh-YqF5Q"):
+#     url = app.config.get('GOOGLE_CALENDAR_LIST')
+#     headers = {"Authorization": "Bearer {0}".format(token)}
+#     calendars = requests.get(url, headers=headers)
+#     c = []
+#     for calendar in calendars.json().get('items'):
+#         c.append((calendar.get('id'), calendar.get('summary')))
+
+#     i, name = c[0]
+#     if create_calendar_channel(token, i):
+#         return render_template('calendars.html', calendars=c)
+#     return render_template('calendars.html', calendars=c)
 
 
 @lm.user_loader
@@ -259,15 +349,6 @@ def oauth_callback(provider):
     oauth = OAuthAuthenticator.get_provider(provider)
     return oauth.callback()
 
-
-@app.route("/auth/login")
-def login():
-    if g.user is not None and g.user.is_authenticated():
-        return redirect(url_for('index'))
-    form = LoginForm()
-    return ""
-
-
 @app.route("/socialconnect")
 def socialconnect():    
     g = {
@@ -290,16 +371,22 @@ def calendar():
 def preferences():    
     return render_template('preferences.html')
 
+
+
 @app.route("/auth/register")
 def register():
-    if request.method == 'GET':
-        return render_template('register.html')
-    user = User(request.form['name'] , request.form['password'], request.form['email'])
-    db.session.add(user)
-    db.session.commit()
-    flash('User successfully registered')
-    return redirect(url_for('login'))
+    if request.method == 'POST' and form.validate():
+        user = User(request.form['name'] , request.form['password'], request.form['email']) 
+        db.session.add(user)
+        db.session.commit()
+        flash('User successfully registered')
+        return redirect(url_for('confirm_register'))
+    return render_template('register.html', form=form)
 
+
+@app.route("/auth/register/confirm")
+def confirm_register():
+    render_template('confirm-register.html')
 
 @app.route("/time")
 def time():
