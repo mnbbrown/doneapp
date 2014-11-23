@@ -2,9 +2,6 @@
 {% block title %}Calendar{% endblock %}
 {% block body %}
 <style>
-
-<<<<<<< HEAD
-<style>
   .uber-button {
     background-image: url({{ url_for('static', filename='img/sprites.jpg') }});
     background-size: cover;
@@ -30,56 +27,38 @@
     background-position: 0 -120px;
   }
 </style>
-
-=======
-#google:hover {
-  background-image: url('images/Red-signin-Google-hover-32dp.png');  
-}
-
-  
-</style>
->>>>>>> 9d1c6005642dfa7dff3a41bc85e5d2b19c28e5e7
     <div class="container-fluid">
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
           <ul class="nav nav-sidebar">
             <li><a href="/calendar">Calendar</a></li>
+            <li><a href="/preferences">Preferences</a></li>
           </ul>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
           <h1 class="page-header">Preferences</h1>
 
           <h3 class="sub-header">Me</h3>
-          Logged in as Reinard van der Leij
-
-
+          Logged in as {{g.user.name}} <br>
+          Email: {{g.user.email}}
 
           <h3 class="sub-header">Google Calendar Account</h3>
-<<<<<<< HEAD
+          {% if not g.user.google_token %}
           <a href="/auth/authorize/google">
             <div class="google-button"></div>
           </a>
+          {% else %}
+          <span>CONNECTED with {{g.user.google_token}}</span>
+          {% endif %}
 
           <h3 class="sub-header">Uber Account</h3>
+          {% if not g.user.uber_token %}
           <a href="/auth/authorize/uber">
             <div class="uber-button"></div>
           </a>
-=======
-          Google Calendar information here.
-          <div class="control-group">
-              <div class="controls google">
-                <a href = "/auth/authorize/google"><img  src="{{ url_for('static', filename='img/Red-signin-Google-base-32dp.png') }}"  id ="google" onmouseover="this.src='{{ url_for('static', filename='img/Red-signin-Google-hover-32dp.png') }}';" onmouseout="this.src='{{ url_for('static', filename='img/Red-signin-Google-press-32dp.png') }}';" ></a>
-              </div>
-          </div>
-
-          <h3 class="sub-header">Uber Account</h3>
-          Uber account information here.
-          <div class="control-group">
-              <div class="controls uber">
-                <a href = "/auth/authorize/uber"><img width="100%" src="{{ url_for('static', filename='img/UBER_API_Button_2x_Grey_hard edge.png') }}" id = "uber" ></a>
-              </div>
-          </div>
->>>>>>> 9d1c6005642dfa7dff3a41bc85e5d2b19c28e5e7
+          {% else %}
+          <span>CONNECTED with {{g.user.uber_token}}</span>
+          {% endif %}
 
           <h3 class="sub-header">Notification preferences</h3>
             <input type="radio" name="notify" value="off">   Off: Order without asking<br>

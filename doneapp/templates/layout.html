@@ -42,8 +42,13 @@
 	    </div>
 	    <div id="navbar" class="navbar-collapse collapse">
 	      <ul class="nav navbar-nav navbar-right">
+	      	{% if g.user.is_authenticated() %}
 	        <li><a href="/preferences"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span> Preferences</a></li>
-	        <li><a href="/"><span class="glyphicon glyphicon-eject" aria-hidden="true"></span> Sign out</a></li>
+	        <li><a href="/auth/logout"><span class="glyphicon glyphicon-eject" aria-hidden="true"></span> Sign out</a></li>
+	        {% else %}
+			<li><a href="/auth/login">Login</a></li>
+			<li><a href="/auth/register">Register</a></li>
+			{% endif %}
 	      </ul>
 	    </div>
 	  </div>
